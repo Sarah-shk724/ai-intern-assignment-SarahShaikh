@@ -1,0 +1,66 @@
+{
+  "name": "B2 - Scheduled Data Fetch Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "days", "daysInterval": 1, "triggerAtHour": 9, "triggerAtMinute": 0}]
+        }
+      },
+      "id": "b2-schedule-0001",
+      "name": "Schedule Trigger - Daily 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.open-meteo.com/v1/forecast?latitude=19.0760&longitude=72.8777&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
+        "options": {}
+      },
+      "id": "b2-http-0002",
+      "name": "HTTP Request - Open-Meteo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nreturn [{\n  json: {\n    city: 'Mumbai',\n    temperature: data.current.temperature_2m,\n    humidity: data.current.relative_humidity_2m,\n    weatherCode: data.current.weather_code,\n    windSpeed: data.current.wind_speed_10m,\n    fetchedAt: data.current.time\n  }\n}];"
+      },
+      "id": "b2-code-0003",
+      "name": "Code - Transform Weather Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {"id":"city","name":"city","value":"={{ $json.city }}","type":"string"},
+            {"id":"temperature","name":"temperature","value":"={{ $json.temperature }}","type":"number"},
+            {"id":"humidity","name":"humidity","value":"={{ $json.humidity }}","type":"number"},
+            {"id":"weatherCode","name":"weatherCode","value":"={{ $json.weatherCode }}","type":"number"},
+            {"id":"windSpeed","name":"windSpeed","value":"={{ $json.windSpeed }}","type":"number"},
+            {"id":"fetchedAt","name":"fetchedAt","value":"={{ $json.fetchedAt }}","type":"string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2-set-0004",
+      "name": "Set - Clean Weather Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - Daily 9 AM":{"main":[[{"node":"HTTP Request - Open-Meteo","type":"main","index":0}]]},
+    "HTTP Request - Open-Meteo":{"main":[[{"node":"Code - Transform Weather Data","type":"main","index":0}]]},
+    "Code - Transform Weather Data":{"main":[[{"node":"Set - Clean Weather Fields","type":"main","index":0}]]}
+  },
+  "pinData": {},
+  "settings":{"executionOrder":"v1"}
+}
