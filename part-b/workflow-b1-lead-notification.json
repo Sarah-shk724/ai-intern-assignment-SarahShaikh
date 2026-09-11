@@ -1,0 +1,17 @@
+{
+  "name": "B1 - Lead Notification Workflow",
+  "nodes": [
+    {"parameters":{"httpMethod":"POST","path":"lead-capture","responseMode":"onReceived","options":{}},"id":"1a2b3c4d-0001-4000-8000-000000000001","name":"Webhook - Form Submission","type":"n8n-nodes-base.webhook","typeVersion":2,"position":[240,300],"webhookId":"b1-lead-capture-webhook"},
+    {"parameters":{"mode":"manual","assignments":{"assignments":[{"id":"assign-name","name":"name","value":"={{ $json.body.fullName }}","type":"string"},{"id":"assign-email","name":"email","value":"={{ $json.body.email }}","type":"string"},{"id":"assign-courseLevel","name":"courseLevel","value":"={{ $json.body.courseLevel }}","type":"string"},{"id":"assign-message","name":"message","value":"={{ $json.body.message }}","type":"string"}]},"options":{}},"id":"1a2b3c4d-0002-4000-8000-000000000002","name":"Set - Extract Lead Fields","type":"n8n-nodes-base.set","typeVersion":3.4,"position":[460,300]},
+    {"parameters":{"conditions":{"options":{"caseSensitive":true,"leftValue":"","typeValidation":"strict"},"conditions":[{"id":"cond-pg","leftValue":"={{ $json.courseLevel }}","rightValue":"PG","operator":{"type":"string","operation":"equals"}},{"id":"cond-phd","leftValue":"={{ $json.courseLevel }}","rightValue":"PhD","operator":{"type":"string","operation":"equals"}}],"combinator":"or"},"options":{}},"id":"1a2b3c4d-0003-4000-8000-000000000003","name":"IF - Is PG or PhD","type":"n8n-nodes-base.if","typeVersion":2,"position":[680,300]},
+    {"parameters":{"fromEmail":"sarahshaikh0404@gmail.com","toEmail":"sarahshaikh0404@gmail.com","subject":"=New {{ $json.courseLevel }} Lead: {{ $json.name }}","emailFormat":"text","text":"=New postgraduate/PhD lead received.\n\nName: {{ $json.name }}\nEmail: {{ $json.email }}\nCourse Level: {{ $json.courseLevel }}\nMessage: {{ $json.message }}","options":{}},"id":"1a2b3c4d-0004-4000-8000-000000000004","name":"Send Email - PG/PhD Notification","type":"n8n-nodes-base.emailSend","typeVersion":2.1,"position":[920,180],"credentials":{"smtp":{"id":"PLACEHOLDER_SMTP_CREDENTIAL_ID","name":"Placeholder SMTP Account"}}},
+    {"parameters":{},"id":"1a2b3c4d-0005-4000-8000-000000000005","name":"No-Op - UG Lead (Mock Log)","type":"n8n-nodes-base.noOp","typeVersion":1,"position":[920,420]}
+  ],
+  "connections": {
+    "Webhook - Form Submission":{"main":[[{"node":"Set - Extract Lead Fields","type":"main","index":0}]]},
+    "Set - Extract Lead Fields":{"main":[[{"node":"IF - Is PG or PhD","type":"main","index":0}]]},
+    "IF - Is PG or PhD":{"main":[[{"node":"Send Email - PG/PhD Notification","type":"main","index":0}],[{"node":"No-Op - UG Lead (Mock Log)","type":"main","index":0}]]}
+  },
+  "pinData": {},
+  "settings":{"executionOrder":"v1"}
+}
