@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Lead Capture — n8n Integration</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:24px 16px;font-family:Arial,sans-serif;background:#f9fafb;color:#1f2937}.container{max-width:560px;margin:auto;background:#fff;padding:32px 28px;border:1px solid #d1d5db;border-radius:8px}h1{margin-top:0;font-size:1.5rem}p{color:#6b7280}label,legend{display:block;font-weight:600;margin:0 0 6px}.form-group{margin-bottom:18px}input,select,textarea{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:6px;font:inherit}textarea{min-height:100px;resize:vertical}.radio-group{display:flex;gap:20px}.radio-option{display:flex;align-items:center;gap:6px}.radio-option label{font-weight:400;margin:0}.error{color:#dc2626;font-size:.82rem;min-height:18px;margin-top:4px}.counter{text-align:right;color:#6b7280;font-size:.8rem}.invalid{border-color:#dc2626}button{width:100%;padding:12px;border:0;border-radius:6px;background:#2563eb;color:white;font-weight:600;font-size:1rem;cursor:pointer}button:disabled{opacity:.65;cursor:not-allowed}.success{padding:22px;text-align:center;background:#ecfdf5;border:1px solid #10b981;border-radius:6px}.hidden{display:none}.submission-error{margin-top:14px;color:#dc2626;text-align:center}@media(max-width:480px){.container{padding:24px 18px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Student Lead Capture Form</h1>
+<p>Submit your study enquiry and our admissions team will get in touch.</p>
+<form id="leadForm" novalidate>
+<div class="form-group"><label for="fullName">Full Name</label><input id="fullName" name="fullName"><div class="error" id="fullNameError"></div></div>
+<div class="form-group"><label for="email">Email</label><input id="email" name="email" type="email"><div class="error" id="emailError"></div></div>
+<div class="form-group"><label for="country">Country</label><select id="country" name="country"><option value="">Select your country</option><option>India</option><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>Germany</option><option>United Arab Emirates</option><option>Singapore</option><option>Other</option></select><div class="error" id="countryError"></div></div>
+<div class="form-group"><fieldset style="border:0;padding:0"><legend>Course Level</legend><div class="radio-group"><div class="radio-option"><input type="radio" name="courseLevel" value="UG" id="ug"><label for="ug">UG</label></div><div class="radio-option"><input type="radio" name="courseLevel" value="PG" id="pg"><label for="pg">PG</label></div><div class="radio-option"><input type="radio" name="courseLevel" value="PhD" id="phd"><label for="phd">PhD</label></div></div></fieldset><div class="error" id="courseLevelError"></div></div>
+<div class="form-group"><label for="university">Preferred University</label><input id="university" name="university"><div class="error" id="universityError"></div></div>
+<div class="form-group"><label for="message">Message</label><textarea id="message" name="message" maxlength="300"></textarea><div class="counter" id="counter">0 / 300</div><div class="error" id="messageError"></div></div>
+<button id="submitButton" type="submit">Submit</button><div id="submissionError" class="submission-error"></div>
+</form>
+<div id="thankYou" class="success hidden"><h2>Thank you!</h2><p>Your enquiry was successfully submitted.</p></div>
+</div>
+<script>
+const form=document.getElementById('leadForm');const button=document.getElementById('submitButton');const message=document.getElementById('message');const counter=document.getElementById('counter');const thankYou=document.getElementById('thankYou');const submissionError=document.getElementById('submissionError');
+const N8N_WEBHOOK_URL='https://sarah0405.app.n8n.cloud/webhook/lead-capture';
+message.addEventListener('input',()=>counter.textContent=`${message.value.length} / 300`);
+function error(id,text){document.getElementById(id+'Error').textContent=text;const field=document.getElementById(id);if(field)field.classList.toggle('invalid',Boolean(text))}
+function validate(){let valid=true;let first=null;const name=document.getElementById('fullName').value.trim();if(!name){error('fullName','Full name is required.');valid=false;first=first||'fullName'}else error('fullName','');const email=document.getElementById('email').value.trim();if(!email){error('email','Email is required.');valid=false;first=first||'email'}else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error('email','Please enter a valid email address.');valid=false;first=first||'email'}else error('email','');if(!document.getElementById('country').value){error('country','Please select a country.');valid=false;first=first||'country'}else error('country','');const level=document.querySelector('input[name="courseLevel"]:checked');document.getElementById('courseLevelError').textContent=level?'':'Please select a course level.';if(!level){valid=false;first=first||'ug'}const uni=document.getElementById('university').value.trim();if(!uni){error('university','Preferred university is required.');valid=false;first=first||'university'}else error('university','');if(!message.value.trim()){error('message','Message is required.');valid=false;first=first||'message'}else error('message','');return{valid,first}}
+form.addEventListener('submit',async(event)=>{event.preventDefault();submissionError.textContent='';const result=validate();if(!result.valid){if(result.first)document.getElementById(result.first).focus();return}const formData={fullName:document.getElementById('fullName').value.trim(),email:document.getElementById('email').value.trim(),country:document.getElementById('country').value,courseLevel:document.querySelector('input[name="courseLevel"]:checked').value,university:document.getElementById('university').value.trim(),message:message.value.trim()};console.log(JSON.stringify(formData,null,2));button.disabled=true;button.textContent='Submitting...';try{const response=await fetch(N8N_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(formData)});if(!response.ok)throw new Error(`Request failed with status ${response.status}`);form.classList.add('hidden');thankYou.classList.remove('hidden')}catch(err){console.error('Submission error:',err);submissionError.textContent='Something went wrong while submitting. Please try again.';button.disabled=false;button.textContent='Submit'}});
+</script>
+</body>
+</html>
